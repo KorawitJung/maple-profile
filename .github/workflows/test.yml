@@ -1,0 +1,33 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Unit tests
+        run: node --test src/*.test.mjs
+      - name: Run the action without publishing
+        id: maple
+        uses: ./
+        with:
+          timezone: Asia/Bangkok
+          publish: "false"
+      - name: Check the drawn image
+        shell: bash
+        env:
+          SVG: ${{ steps.maple.outputs.svg-path }}
+        run: |
+          head -c 4 "$SVG" | grep -q '<svg'
+          ! grep -qi '<script' "$SVG"
+          echo "Drew $(wc -c < "$SVG") bytes."

@@ -1,0 +1,76 @@
+name: Maple Profile
+description: Draw an animated pixel-art maple tree for your profile README. Each red flower is one contribution you made today.
+author: KorawitJung
+branding:
+  icon: sun
+  color: yellow
+
+inputs:
+  login:
+    description: GitHub account whose contributions are counted.
+    default: ${{ github.repository_owner }}
+  timezone:
+    description: IANA time zone that decides when your day starts, such as Asia/Bangkok or America/New_York.
+    default: UTC
+  token:
+    description: Token that reads the contribution calendar and pushes the image. The workflow's own token is enough.
+    default: ${{ github.token }}
+  branch:
+    description: Branch that receives the image. The action force-pushes a single commit to it, so never use a branch whose history you want to keep.
+    default: output
+  file:
+    description: File name of the image on that branch.
+    default: maple.svg
+  publish:
+    description: Set to "false" to only draw the image and skip the push.
+    default: "true"
+
+outputs:
+  svg-path:
+    description: Path of the drawn SVG on the runner.
+    value: ${{ steps.draw.outputs.svg-path }}
+
+runs:
+  using: composite
+  steps:
+    - id: draw
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        MAPLE_LOGIN: ${{ inputs.login }}
+        MAPLE_TIMEZONE: ${{ inputs.timezone }}
+        MAPLE_FILE: ${{ inputs.file }}
+      run: |
+        out="$RUNNER_TEMP/$MAPLE_FILE"
+        node "$GITHUB_ACTION_PATH/src/render.mjs" --out "$out"
+        echo "svg-path=$out" >> "$GITHUB_OUTPUT"
+
+    - if: inputs.publish == 'true'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        MAPLE_BRANCH: ${{ inputs.branch }}
+        MAPLE_FILE: ${{ inputs.file }}
+        MAPLE_SVG: ${{ steps.draw.outputs.svg-path }}
+        DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      run: |
+        if [ -z "$MAPLE_BRANCH" ] || [ "$MAPLE_BRANCH" = "$DEFAULT_BRANCH" ] || [ "$MAPLE_BRANCH" = main ] || [ "$MAPLE_BRANCH" = master ]; then
+          echo "::error::Refusing to force-push to '$MAPLE_BRANCH'. Pick a branch used only for the image, such as 'output'."
+          exit 1
+        fi
+        remote="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+        pub="$RUNNER_TEMP/maple-publish"
+        rm -rf "$pub" && mkdir "$pub" && cd "$pub"
+        git init --quiet --initial-branch="$MAPLE_BRANCH"
+        if git fetch --quiet --depth=1 "$remote" "$MAPLE_BRANCH" 2>/dev/null \
+          && git show "FETCH_HEAD:$MAPLE_FILE" > old.svg 2>/dev/null \
+          && cmp -s old.svg "$MAPLE_SVG"; then
+          echo "The maple is unchanged; nothing to publish."
+          exit 0
+        fi
+        rm -f old.svg
+        cp "$MAPLE_SVG" "$MAPLE_FILE"
+        git add "$MAPLE_FILE"
+        git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit --quiet --message "maple: draw today's tree"
+        git push --quiet --force "$remote" "HEAD:refs/heads/$MAPLE_BRANCH"
+        echo "Published $MAPLE_FILE to branch $MAPLE_BRANCH."

@@ -1,0 +1,20 @@
+name: Maple
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: maple
+
+jobs:
+  maple:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: KorawitJung/maple-profile@v1
+        with:
+          timezone: UTC
