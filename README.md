@@ -91,5 +91,5 @@ Action นี้วาดต้นเมเปิล pixel art ที่ขย�
 ข้อจำกัดความรับผิดชอบ: โปรเจกต์นี้ไม่มีส่วนเกี่ยวข้องกับ GitHub, Inc. ซอฟต์แวร์ให้ใช้ตามสภาพ ไม่มีการรับประกันใดๆ ตามเงื่อนไขของ MIT License และ Action จะ force-push ไปที่ branch ที่ตั้งไว้ใน `branch` ห้ามตั้งเป็น branch ที่มีประวัติที่ต้องการเก็บไว้
 
 ## License
-
+The code is released under the [MIT](LICENSE). The license covers this project's code only. News headlines, summaries and images remain the property of their publishers.
 [MIT](LICENSE)
