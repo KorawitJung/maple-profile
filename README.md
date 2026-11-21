@@ -92,4 +92,4 @@ Action นี้วาดต้นเมเปิล pixel art ที่ขย�
 
 ## License
 The code is released under the [MIT](LICENSE) License. The license covers this project's code only. News headlines, summaries and images remain the property of their publishers.
-[MIT](LICENSE)
+
